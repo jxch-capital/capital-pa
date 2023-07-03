@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.text.MessageFormat;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -37,8 +36,6 @@ public class EMAGapFormPriceAction implements FormPriceAction {
         EMAIndex.EMAIndexOutput emaIndexOutput = emaIndex.calculate(histKs, emaIndexParams);
 
         double[] outReal = emaIndexOutput.getOutReal();
-        int start = Math.max(0, outReal.length - maGapFormPAParams.period);
-        double[] lastPeriodEMA = Arrays.copyOfRange(outReal, start, outReal.length);
 
         if (IntStream.range(0, maGapFormPAParams.period).allMatch(i -> histKs.get(histKs.size() - i).getLow() > outReal[outReal.length - i])) {
             String msg = MessageFormat.format("最低价连续{0}日在EMA{1}之上，注意下跌回测均线时出现均线缺口形态，预计回测前高", maGapFormPAParams.period, emaIndexParams.getPeriod());
@@ -48,7 +45,7 @@ public class EMAGapFormPriceAction implements FormPriceAction {
             return new MAGapFormPAOutput(msg);
         }
 
-        return new MAGapFormPAOutput();
+        return new MAGapFormPAOutput().emptyPAOutput();
     }
 
     @Override
@@ -78,6 +75,12 @@ public class EMAGapFormPriceAction implements FormPriceAction {
         @Override
         public boolean isNotEmpty() {
             return StringUtils.hasText(msg);
+        }
+
+        @Override
+        public PAOutput emptyPAOutput() {
+            msg = null;
+            return this;
         }
     }
 
