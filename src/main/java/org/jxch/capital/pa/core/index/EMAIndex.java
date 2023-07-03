@@ -40,9 +40,9 @@ public class EMAIndex implements Index<EMAIndex.EMAIndexParams, EMAIndex.EMAInde
 
         if (retCode == RetCode.Success) {
             int num = outBegIdx.value;
-            double[] newPrice = new double[num + price.length];
+            double[] newPrice = new double[num + outReal.length];
             Arrays.fill(newPrice, 0, num, params.fill);
-            System.arraycopy(outReal, 0, newPrice, num, price.length);
+            System.arraycopy(outReal, 0, newPrice, num, outReal.length);
 
             return EMAIndexOutput.builder()
                     .outBegIdx(outBegIdx.value)
