@@ -6,6 +6,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class PriceActionServiceImpl implements PriceActionService {
@@ -17,15 +18,20 @@ public class PriceActionServiceImpl implements PriceActionService {
 
     @Override
     public List<PAOutput> analyze(List<HistK> histKs) {
-        return getAllPriceAction().stream().filter(priceAction -> priceAction.support(histKs, priceAction.getDefaultPAParams()))
-                .map(priceAction -> priceAction.output(histKs, priceAction.getDefaultPAParams()))
-                .filter(PAOutput::notEmpty)
-                .toList();
+        List<PriceAction> priceActions = getAllPriceAction().stream().filter(priceAction ->
+                priceAction.support(histKs, priceAction.getDefaultPAParams())).toList();
+
+        Map<PriceAction, PAOutput> outputMap = priceActions.stream()
+                .map(priceAction -> new AbstractMap.SimpleEntry<>(priceAction, priceAction.output(histKs, priceAction.getDefaultPAParams())))
+                .filter(entry -> entry.getValue().notEmpty())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        return removeDependOutput(outputMap);
     }
 
     @Override
     public List<PAOutput> analyze(@NonNull List<HistK> histKs, @NonNull Map<String, Object> params) {
-        List<PAOutput> outputs = new ArrayList<>();
+        HashMap<PriceAction, PAOutput> outputMap = new HashMap<>();
         Set<String> paNames = params.keySet();
         for (PriceAction priceAction : getAllPriceAction()) {
             PAParams paParams;
@@ -39,11 +45,21 @@ public class PriceActionServiceImpl implements PriceActionService {
             if (priceAction.support(histKs, paParams)) {
                 PAOutput output = priceAction.output(histKs, paParams);
                 if (output.notEmpty()) {
-                    outputs.add(output);
+                    outputMap.put(priceAction, output);
                 }
             }
         }
 
-        return outputs;
+        return removeDependOutput(outputMap);
     }
+
+    private List<PAOutput> removeDependOutput(@NonNull Map<PriceAction, PAOutput> outputMap) {
+        List<PriceAction> dependPAs = outputMap.keySet().stream().map(PriceAction::depend).flatMap(List::stream).toList();
+        for (PriceAction priceAction : dependPAs) {
+            outputMap.remove(priceAction);
+        }
+
+        return outputMap.values().stream().toList();
+    }
+
 }

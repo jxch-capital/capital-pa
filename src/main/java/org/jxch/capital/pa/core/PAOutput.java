@@ -11,15 +11,16 @@ import org.springframework.util.StringUtils;
 @AllArgsConstructor
 @Accessors(chain = true)
 public class PAOutput {
-    protected String msg = null;
+    protected String detailed = null;
+    protected String summary = null;
     protected String title = null;
 
     public boolean notEmpty() {
-        return StringUtils.hasText(msg);
+        return StringUtils.hasText(title) && StringUtils.hasText(detailed);
     }
 
     public PAOutput emptyPAOutput() {
-        return setMsg(null);
+        return setDetailed(null);
     }
 
 }

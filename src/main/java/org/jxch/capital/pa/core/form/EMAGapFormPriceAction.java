@@ -16,10 +16,7 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class EMAGapFormPriceAction implements FormPriceAction {
     private final EMAIndex emaIndex;
-    private final static String DETAILED = """
-            注意回测均线时出现均线缺口形态，预计回测前极值。反转时可能是通道线过靶后的高潮耗竭反转，注意反转形态。
-            如果趋势强劲，那么回测时可能并未触碰到均线（如果已经发生了回调，可以忽视这条提示），但第一反弹目标仍是前高。
-            """;
+
 
     @Override
     public boolean support(List<HistK> histKs, PAParams params) {
@@ -39,16 +36,14 @@ public class EMAGapFormPriceAction implements FormPriceAction {
         EMAIndex.EMAIndexOutput emaIndexOutput = emaIndex.calculate(histKs, emaIndexParams);
 
         double[] outReal = emaIndexOutput.getOutReal();
-
+        MAGapFormPAOutput paOutput = new MAGapFormPAOutput();
         if (IntStream.range(1, maGapFormPAParams.period + 1).allMatch(i -> histKs.get(histKs.size() - i).getLow() > outReal[outReal.length - i])) {
-            String msg = MessageFormat.format("最低价连续{0}日在EMA{1}之上，" + DETAILED, maGapFormPAParams.period, emaIndexParams.getPeriod());
-            return new MAGapFormPAOutput().setMsg(msg);
+            return paOutput.setDetailed(MessageFormat.format(paOutput.getDetailed(), maGapFormPAParams.period, emaIndexParams.getPeriod()));
         } else if (IntStream.range(1, maGapFormPAParams.period + 1).allMatch(i -> histKs.get(histKs.size() - i).getHigh() < outReal[outReal.length - i])) {
-            String msg = MessageFormat.format("最高价连续{0}日在EMA{1}之下，" + DETAILED, maGapFormPAParams.period, emaIndexParams.getPeriod());
-            return new MAGapFormPAOutput().setMsg(msg);
+            return paOutput.setDetailed(MessageFormat.format(paOutput.getDetailed(), maGapFormPAParams.period, emaIndexParams.getPeriod()));
         }
 
-        return new MAGapFormPAOutput().emptyPAOutput();
+        return paOutput.emptyPAOutput();
     }
 
     @Override
@@ -73,7 +68,13 @@ public class EMAGapFormPriceAction implements FormPriceAction {
     @EqualsAndHashCode(callSuper = true)
     public static class MAGapFormPAOutput extends PAOutput {
         public MAGapFormPAOutput() {
-            setTitle("均线缺口形态");
+            setTitle("均线缺口形态")
+                    .setSummary("第一目标位回测前极值")
+                    .setDetailed(""" 
+                            最低价连续{0}日在EMA{1}之上，
+                            注意回测均线时出现均线缺口形态，预计回测前极值。反转时可能是通道线过靶后的高潮耗竭反转，注意反转形态。
+                            如果趋势强劲，那么回测时可能并未触碰到均线（如果已经发生了回调，可以忽视这条提示），但第一反弹目标仍是前高。
+                            """);
         }
     }
 
