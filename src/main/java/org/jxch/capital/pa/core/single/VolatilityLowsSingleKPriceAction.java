@@ -40,7 +40,7 @@ public class VolatilityLowsSingleKPriceAction implements SingleKPriceAction {
     public PAOutput output(@NonNull List<HistK> histKs, PAParams params) {
         List<HistK> lowPoints = IntStream.range(3, histKs.size())
                 .filter(i -> isVolatilityLow(histKs.get(i), histKs.get(i - 1), histKs.get(i - 2)))
-                .mapToObj(histKs::get)
+                .mapToObj(i -> histKs.get(i - 1))
                 .toList();
 
         VolatilityLowsPAOutput paOutput = new VolatilityLowsPAOutput();
@@ -49,16 +49,16 @@ public class VolatilityLowsSingleKPriceAction implements SingleKPriceAction {
         }
 
         VolatilityLowsPAParams paParams = (VolatilityLowsPAParams) params;
-        int size = Math.min(paParams.getPeriod(), lowPoints.size());
+        int size = Math.min(paParams.getPeriod() + 2, lowPoints.size());
         if (size == 1) {
             return paOutput;
         }
 
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
         Double lastLow = Objects.requireNonNull(CollectionUtils.lastElement(lowPoints)).getLow();
-        String detailed = IntStream.range(1, size)
+        String detailed = IntStream.range(2, size)
                 .mapToObj(i -> {
-                    HistK point = lowPoints.get(i);
+                    HistK point = lowPoints.get(lowPoints.size() - i);
                     Double low = point.getLow();
 
                     String msg = "";
@@ -67,16 +67,16 @@ public class VolatilityLowsSingleKPriceAction implements SingleKPriceAction {
                     }
 
                     if (lastLow > low) {
-                        msg += MessageFormat.format("相对于{0}低点抬升. ", formatter.format(point.getDate()));
+                        msg += MessageFormat.format("相对于{0}形成低点抬升. ", formatter.format(point.getDate()));
                     } else if (lastLow < low) {
-                        msg += MessageFormat.format("相对于{0}低点降低. ", formatter.format(point.getDate()));
+                        msg += MessageFormat.format("相对于{0}形成低点下降. ", formatter.format(point.getDate()));
                     }
 
                     return msg;
                 }).map(Object::toString)
                 .collect(Collectors.joining("\n"));
 
-        return paOutput.setDetailed(detailed).setSummary(MessageFormat.format("找到{0}个波动低点", lowPoints.size()));
+        return paOutput.setDetailed(detailed).setSummary(MessageFormat.format("参考最近{0}个波动低点", size - 2));
     }
 
     @Override
@@ -88,8 +88,8 @@ public class VolatilityLowsSingleKPriceAction implements SingleKPriceAction {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class VolatilityLowsPAParams implements PAParams {
-        private int period = 5;
-        private double threshold = 0.00001;
+        private int period = 8;
+        private double threshold = 0.0001;
     }
 
     @Data
