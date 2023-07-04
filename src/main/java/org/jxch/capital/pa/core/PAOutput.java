@@ -16,11 +16,11 @@ public class PAOutput {
     protected String title = null;
 
     public boolean notEmpty() {
-        return StringUtils.hasText(title) && StringUtils.hasText(detailed);
+        return StringUtils.hasText(title);
     }
 
     public PAOutput emptyPAOutput() {
-        return setDetailed(null);
+        return setTitle(null);
     }
 
 }
