@@ -19,7 +19,7 @@ public class PriceActionServiceImpl implements PriceActionService {
     public List<PAOutput> analyze(List<HistK> histKs) {
         return getAllPriceAction().stream().filter(priceAction -> priceAction.support(histKs, priceAction.getDefaultPAParams()))
                 .map(priceAction -> priceAction.output(histKs, priceAction.getDefaultPAParams()))
-                .filter(PAOutput::isNotEmpty)
+                .filter(PAOutput::notEmpty)
                 .toList();
     }
 
@@ -38,7 +38,7 @@ public class PriceActionServiceImpl implements PriceActionService {
 
             if (priceAction.support(histKs, paParams)) {
                 PAOutput output = priceAction.output(histKs, paParams);
-                if (output.isNotEmpty()) {
+                if (output.notEmpty()) {
                     outputs.add(output);
                 }
             }

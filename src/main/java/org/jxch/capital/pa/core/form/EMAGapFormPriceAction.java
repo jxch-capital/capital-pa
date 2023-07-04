@@ -7,7 +7,6 @@ import org.jxch.capital.pa.core.PAParams;
 import org.jxch.capital.pa.core.index.EMAIndex;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.text.MessageFormat;
 import java.util.List;
@@ -43,10 +42,10 @@ public class EMAGapFormPriceAction implements FormPriceAction {
 
         if (IntStream.range(1, maGapFormPAParams.period + 1).allMatch(i -> histKs.get(histKs.size() - i).getLow() > outReal[outReal.length - i])) {
             String msg = MessageFormat.format("最低价连续{0}日在EMA{1}之上，" + DETAILED, maGapFormPAParams.period, emaIndexParams.getPeriod());
-            return new MAGapFormPAOutput(msg);
+            return new MAGapFormPAOutput().setMsg(msg);
         } else if (IntStream.range(1, maGapFormPAParams.period + 1).allMatch(i -> histKs.get(histKs.size() - i).getHigh() < outReal[outReal.length - i])) {
             String msg = MessageFormat.format("最高价连续{0}日在EMA{1}之下，" + DETAILED, maGapFormPAParams.period, emaIndexParams.getPeriod());
-            return new MAGapFormPAOutput(msg);
+            return new MAGapFormPAOutput().setMsg(msg);
         }
 
         return new MAGapFormPAOutput().emptyPAOutput();
@@ -71,20 +70,10 @@ public class EMAGapFormPriceAction implements FormPriceAction {
 
     @Data
     @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class MAGapFormPAOutput implements PAOutput {
-        private String msg = null;
-
-        @Override
-        public boolean isNotEmpty() {
-            return StringUtils.hasText(msg);
-        }
-
-        @Override
-        public PAOutput emptyPAOutput() {
-            msg = null;
-            return this;
+    @EqualsAndHashCode(callSuper = true)
+    public static class MAGapFormPAOutput extends PAOutput {
+        public MAGapFormPAOutput() {
+            setTitle("均线缺口形态");
         }
     }
 
