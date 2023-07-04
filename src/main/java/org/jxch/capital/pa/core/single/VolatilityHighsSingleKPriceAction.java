@@ -18,31 +18,37 @@ import java.util.stream.IntStream;
 
 @Slf4j
 @Service
-public class VolatilityLowsSingleKPriceAction extends VolatilityPointsSingleKPriceAction {
+public class VolatilityHighsSingleKPriceAction extends VolatilityPointsSingleKPriceAction {
 
     @Override
     protected boolean isVolatility(@NonNull HistK last1, @NonNull HistK last2, @NonNull HistK last3) {
-        return last1.getLow() >= last2.getLow() && last2.getLow() <= last3.getLow();
+        return last1.getHigh() <= last2.getHigh() && last2.getHigh() >= last3.getHigh();
+    }
+
+    @Override
+    protected PAOutput getDefaultPAOutput() {
+        return new VolatilityHighsPAOutput();
     }
 
     @Override
     protected String getDetailed(List<HistK> points, int size, VolatilityPointsPAParams params) {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-        Double lastLow = Objects.requireNonNull(CollectionUtils.lastElement(points)).getLow();
+        Double lastHigh = Objects.requireNonNull(CollectionUtils.lastElement(points)).getHigh();
+
         return IntStream.range(2, size)
                 .mapToObj(i -> {
                     HistK point = points.get(points.size() - i);
-                    Double low = point.getLow();
+                    Double high = point.getHigh();
 
                     String msg = "";
-                    if (Math.abs(lastLow - low) / lastLow < params.getThreshold()) {
-                        msg = MessageFormat.format("与{0}形成双底. ", formatter.format(point.getDate()));
+                    if (Math.abs(lastHigh - high) / lastHigh < params.getThreshold()) {
+                        msg = MessageFormat.format("与{0}形成双顶. ", formatter.format(point.getDate()));
                     }
 
-                    if (lastLow > low) {
-                        msg += MessageFormat.format("相对于{0}形成低点抬升. ", formatter.format(point.getDate()));
-                    } else if (lastLow < low) {
-                        msg += MessageFormat.format("相对于{0}形成低点下降. ", formatter.format(point.getDate()));
+                    if (lastHigh > high) {
+                        msg += MessageFormat.format("相对于{0}形成高点抬升. ", formatter.format(point.getDate()));
+                    } else if (lastHigh < high) {
+                        msg += MessageFormat.format("相对于{0}形成高点下降. ", formatter.format(point.getDate()));
                     }
 
                     return msg;
@@ -50,16 +56,11 @@ public class VolatilityLowsSingleKPriceAction extends VolatilityPointsSingleKPri
                 .collect(Collectors.joining("\n"));
     }
 
-    @Override
-    protected PAOutput getDefaultPAOutput() {
-        return new VolatilityLowsPAOutput();
-    }
-
     @Data
     @EqualsAndHashCode(callSuper = true)
-    public static class VolatilityLowsPAOutput extends PAOutput {
-        public VolatilityLowsPAOutput() {
-            setTitle("波动低点");
+    public static class VolatilityHighsPAOutput extends PAOutput {
+        public VolatilityHighsPAOutput() {
+            setTitle("波动高点");
         }
     }
 
