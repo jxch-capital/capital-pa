@@ -1,9 +1,6 @@
 package org.jxch.capital.pa.core.single;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jxch.capital.pa.core.HistK;
 import org.jxch.capital.pa.core.PAOutput;
@@ -17,10 +14,15 @@ import java.util.Objects;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class BaldSingleKPriceAction implements SingleKPriceAction {
+    private final DojiSingleKPriceAction dojiSingleKPriceAction;
+
     @Override
     public boolean support(@NonNull List<HistK> histKs, PAParams params) {
-        if (histKs.size() > 1 && params instanceof BaldPAParams paParams) {
+        if (histKs.size() > 1
+                && !dojiSingleKPriceAction.support(histKs, new DojiSingleKPriceAction.DojiPAParams())
+                && params instanceof BaldPAParams paParams) {
             HistK lasted = Objects.requireNonNull(CollectionUtils.lastElement(histKs));
             return Math.abs(lasted.getHigh() - lasted.getOpen()) / lasted.getHigh() < paParams.getThreshold()
                     || Math.abs(lasted.getHigh() - lasted.getClose()) / lasted.getHigh() < paParams.getThreshold()
