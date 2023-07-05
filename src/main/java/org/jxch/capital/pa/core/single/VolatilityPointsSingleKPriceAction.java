@@ -61,7 +61,7 @@ public abstract class VolatilityPointsSingleKPriceAction implements SingleKPrice
     @AllArgsConstructor
     public static class VolatilityPointsPAParams implements PAParams {
         private int period = 8;
-        private double threshold = 0.0001;
+        private double threshold = 0.001;
     }
 
 }
